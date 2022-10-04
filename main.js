@@ -68,4 +68,3 @@ function init() {
 }
 
 init();
-//2
