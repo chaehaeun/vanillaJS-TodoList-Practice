@@ -2,37 +2,70 @@ const todoUl = document.querySelector(".todoListCont ul");
 const input = document.querySelector(".todoInput");
 const inputForm = document.querySelector(".inputForm");
 let index = 0;
+let toDos = [];
+const dataKey = "dataKey";
 
-function onAdd() {
-  if (input.value == "") {
-    input.focus();
-    return;
-  }
+const savedTodo = localStorage.getItem(dataKey);
+const loadedData = JSON.parse(savedTodo);
+function setTodo(toDo) {
+  const toDoObj = {
+    txt: toDo,
+    id: toDos.length + 1,
+  };
+  toDos.push(toDoObj);
+  localStorage.setItem(dataKey, JSON.stringify(toDos));
+}
+
+function putValue(toDo) {
   const todoLi = document.createElement("li");
   todoLi.innerHTML = `
     <input type="checkbox" id="check${index}" value="${index}">
     <label for="check${index}"></label>
-    <p>${input.value}</p>
+    <p>${toDo}</p>
     <i class="fa-sharp fa-solid fa-trash-can delIcon"></i>
   `;
   todoUl.append(todoLi);
-  input.value = null;
-  todoLi.scrollIntoView({ block: "center" });
+  todoLi.setAttribute("id", `${toDos.length + 1}`);
   index++;
+  todoLi.scrollIntoView({ block: "center" });
 }
 
-inputForm.addEventListener("submit", (e) => {
+function addTodo(e) {
   e.preventDefault();
-  onAdd();
-});
+  const toDo = input.value;
+  putValue(toDo);
+  setTodo(toDo);
+  input.value = "";
+}
+
+function loadSavedList() {
+  if (savedTodo !== null) {
+    loadedData.forEach((data) => {
+      let txt = data.txt;
+      putValue(txt);
+      setTodo(txt);
+    });
+  }
+}
 
 todoUl.addEventListener("click", (e) => {
   if (e.target.classList.contains("delIcon")) {
+    let tmp = [];
     e.target.parentElement.remove();
+    for (let i = 0; i < toDos.length; i++) {
+      if (toDos[i]["id"] !== Number(e.target.parentElement.id)) {
+        tmp.push(toDos[i]);
+      }
+    }
+
+    localStorage.setItem(dataKey, JSON.stringify(tmp));
   }
 });
 
-// 1. 인풋이 서브밋 됐을 때
-// 2. 템플릿을 넣어줘(인풋값도 같이 들어가지게)
-// 3. 스크롤바 내려가면 같이 시점 따라가게 해줘
-// 4. 쓰레기통 버튼 누르면 하나씩 삭제 시켜줘
+function init() {
+  loadSavedList(); //
+  inputForm.addEventListener("submit", addTodo);
+}
+
+init();
+//1
