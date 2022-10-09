@@ -1,70 +1,58 @@
-const todoUl = document.querySelector(".todoListCont ul");
+const todoForm = document.querySelector(".inputForm");
 const input = document.querySelector(".todoInput");
-const inputForm = document.querySelector(".inputForm");
-let index = 0;
-let toDos = [];
-const dataKey = "dataKey";
+const todoCont = document.querySelector(".todoListCont ul");
 
-const savedTodo = localStorage.getItem(dataKey);
-const loadedData = JSON.parse(savedTodo);
-function setTodo(toDo) {
-  const toDoObj = {
-    txt: toDo,
-    id: toDos.length + 1,
-  };
-  toDos.push(toDoObj);
-  localStorage.setItem(dataKey, JSON.stringify(toDos));
+const TODO_KEY = "todoKey";
+let todos = [];
+
+function saveTodo() {
+  localStorage.setItem(TODO_KEY, JSON.stringify(todos));
 }
 
-function putValue(toDo) {
-  const todoLi = document.createElement("li");
-  todoLi.innerHTML = `
-    <input type="checkbox" id="check${index}" value="${index}">
-    <label for="check${index}"></label>
-    <p>${toDo}</p>
-    <i class="fa-sharp fa-solid fa-trash-can delIcon"></i>
+function delTodo(e) {
+  const li = e.target.parentElement;
+  li.remove();
+  todos = todos.filter((todo) => todo.id !== parseInt(li.id));
+  saveTodo();
+}
+
+function paintTodo(todoObj) {
+  const li = document.createElement("li");
+  li.id = todoObj.id;
+  li.innerHTML = `
+    <input type="checkbox" id="check${li.id}" value="${li.id}">
+    <label for="check${li.id}"></label>
+    <p>${todoObj.name}</p>
   `;
-  todoUl.append(todoLi);
-  todoLi.setAttribute("id", `${toDos.length + 1}`);
-  index++;
-  todoLi.scrollIntoView({ block: "center" });
+  li.setAttribute("class", "todo_li");
+  todoCont.appendChild(li);
+  const button = document.createElement("i");
+  button.setAttribute("class", "fa-sharp fa-solid fa-trash-can delIcon");
+  li.appendChild(button);
+  button.addEventListener("click", delTodo);
+  todoForm.focus();
+  li.scrollIntoView({ block: "center" });
 }
 
-function addTodo(e) {
+function handleEvent(e) {
   e.preventDefault();
-  const toDo = input.value;
-  putValue(toDo);
-  setTodo(toDo);
+  const todoValue = input.value;
   input.value = "";
+  const todoObj = {
+    name: todoValue,
+    id: Date.now(),
+  };
+  todos.push(todoObj);
+  paintTodo(todoObj);
+  saveTodo();
 }
 
-function loadSavedList() {
-  if (savedTodo !== null) {
-    loadedData.forEach((data) => {
-      let txt = data.txt;
-      putValue(txt);
-      setTodo(txt);
-    });
-  }
+todoForm.addEventListener("submit", handleEvent);
+
+const loadData = localStorage.getItem(TODO_KEY);
+
+if (loadData !== null) {
+  const savedTodo = JSON.parse(loadData);
+  todos = savedTodo;
+  savedTodo.forEach(paintTodo);
 }
-
-todoUl.addEventListener("click", (e) => {
-  if (e.target.classList.contains("delIcon")) {
-    let tmp = [];
-    e.target.parentElement.remove();
-    for (let i = 0; i < toDos.length; i++) {
-      if (toDos[i]["id"] !== Number(e.target.parentElement.id)) {
-        tmp.push(toDos[i]);
-      }
-    }
-
-    localStorage.setItem(dataKey, JSON.stringify(tmp));
-  }
-});
-
-function init() {
-  loadSavedList(); //
-  inputForm.addEventListener("submit", addTodo);
-}
-
-init();
